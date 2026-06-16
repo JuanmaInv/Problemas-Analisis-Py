@@ -43,6 +43,12 @@ python -m pip install -r requirements.txt
 python main.py
 ```
 
+## Tests
+
+```powershell
+python -m unittest discover -s tests
+```
+
 En el ejercicio 1 la funcion derivada debe ingresarse como expresion en terminos de `x` e `y`, por ejemplo:
 
 ```text
