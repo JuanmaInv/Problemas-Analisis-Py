@@ -7,13 +7,20 @@ Proyecto base en Python para desarrollar dos ejercicios:
 
 ## Estado actual
 
-La estructura del proyecto ya esta preparada, pero los algoritmos todavia no fueron implementados.
+La estructura del proyecto ya esta preparada y ambos ejercicios cuentan con:
+
+- punto de entrada desde el menu principal;
+- lectura de datos por consola;
+- validaciones iniciales;
+- resumen de parametros ingresados.
+
+Los algoritmos numericos todavia no fueron implementados.
 
 ## Estructura
 
 - `main.py`: punto de entrada con menu principal.
-- `ejercicio1_edo.py`: modulo reservado para el ejercicio de EDO e interpolacion.
-- `ejercicio2_potencia_inversa.py`: modulo reservado para el ejercicio de potencia inversa.
+- `ejercicio1_edo.py`: modulo base para EDO, entrada de datos y validaciones.
+- `ejercicio2_potencia_inversa.py`: modulo base para potencia inversa, entrada de datos y validaciones.
 - `requirements.txt`: dependencias del proyecto.
 
 ## Entorno virtual
