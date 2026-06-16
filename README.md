@@ -43,6 +43,8 @@ python -m pip install -r requirements.txt
 python main.py
 ```
 
+El programa muestra un menu para elegir el ejercicio `1` o `2`.
+
 ## Tests
 
 ```powershell
@@ -65,6 +67,48 @@ En el ejercicio 2 se debe ingresar:
 - la tolerancia y el maximo de iteraciones.
 
 La implementacion calcula el autovalor de menor magnitud asociado a la matriz, siempre que sea no singular.
+
+## Verificacion paso a paso
+
+Para el ejercicio 1 se puede probar, por ejemplo:
+
+```text
+f(x, y) = x + y
+x0 = 0
+y0 = 1
+h = 0.1
+pasos = 2
+x a interpolar = 0.15
+```
+
+La salida mostrara:
+
+- una tabla con `k1`, `k2`, `k3`, `k4` y `y_(i+1)` en cada paso;
+- el tramo usado para interpolar;
+- el reemplazo numerico de la formula de interpolacion.
+
+Para el ejercicio 2 se puede probar, por ejemplo:
+
+```text
+dimension = 2
+tolerancia = 0.000001
+maximo de iteraciones = 20
+matriz =
+2 0
+0 5
+vector inicial =
+1
+1
+```
+
+La salida mostrara:
+
+- el vector anterior de cada iteracion;
+- el vector intermedio `z = A^-1 v`;
+- el vector normalizado nuevo;
+- el autovalor aproximado y el error de convergencia.
+
+Con esos datos, el metodo debe converger hacia el autovalor `2` y hacia un autovector proporcional a `[1, 0]`.
 
 ## Dependencias actuales
 

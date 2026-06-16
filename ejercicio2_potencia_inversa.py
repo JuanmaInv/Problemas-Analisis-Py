@@ -20,6 +20,9 @@ class IteracionPotenciaInversa:
     """Representa una iteracion del metodo."""
 
     iteracion: int
+    vector_anterior: np.ndarray
+    solucion_intermedia: np.ndarray
+    vector_normalizado: np.ndarray
     autovalor_aprox: float
     error_vector: float
 
@@ -157,6 +160,9 @@ def metodo_potencia_inversa(
         historial.append(
             IteracionPotenciaInversa(
                 iteracion=iteracion,
+                vector_anterior=vector_actual.copy(),
+                solucion_intermedia=solucion.copy(),
+                vector_normalizado=vector_siguiente.copy(),
                 autovalor_aprox=autovalor_aprox,
                 error_vector=error_vector,
             )
@@ -175,13 +181,22 @@ def mostrar_tabla_iteraciones(historial: list[IteracionPotenciaInversa]) -> None
     filas = [
         [
             iteracion.iteracion,
+            np.array2string(iteracion.vector_anterior, precision=6, suppress_small=True),
+            np.array2string(iteracion.solucion_intermedia, precision=6, suppress_small=True),
+            np.array2string(iteracion.vector_normalizado, precision=6, suppress_small=True),
             f"{iteracion.autovalor_aprox:.8f}",
             f"{iteracion.error_vector:.8e}",
         ]
         for iteracion in historial
     ]
     print()
-    print(tabulate(filas, headers=["i", "autovalor", "error"], tablefmt="grid"))
+    print(
+        tabulate(
+            filas,
+            headers=["i", "v anterior", "z = A^-1 v", "v nuevo", "autovalor", "error"],
+            tablefmt="grid",
+        )
+    )
 
 
 def mostrar_resultado_final(
@@ -197,6 +212,8 @@ def mostrar_resultado_final(
     print(f"Autovector aproximado = {np.array2string(autovector, precision=6)}")
     print(f"Iteraciones realizadas = {iteraciones_realizadas}")
     print(f"Convergencia alcanzada = {'si' if convergio else 'no'}")
+    if not convergio:
+        print("Aviso: no se alcanzo la tolerancia pedida. Conviene aumentar las iteraciones.")
 
 
 def mostrar_resumen_potencia_inversa(

@@ -30,6 +30,7 @@ class PasoRK4:
     k2: float
     k3: float
     k4: float
+    y_siguiente: float
 
 
 def solicitar_float(mensaje: str) -> float:
@@ -115,6 +116,7 @@ def calcular_aproximaciones_rk4(
                     k2=0.0,
                     k3=0.0,
                     k4=0.0,
+                    y_siguiente=y_actual,
                 )
             )
             continue
@@ -137,6 +139,7 @@ def calcular_aproximaciones_rk4(
                 k2=k2,
                 k3=k3,
                 k4=k4,
+                y_siguiente=y_actual,
             )
         )
 
@@ -171,12 +174,49 @@ def mostrar_tabla_aproximaciones(pasos: list[PasoRK4]) -> None:
             f"{paso.k2:.6f}",
             f"{paso.k3:.6f}",
             f"{paso.k4:.6f}",
+            f"{paso.y_siguiente:.6f}",
         ]
         for paso in pasos
     ]
-    encabezados = ["i", "x_i", "y_i", "k1", "k2", "k3", "k4"]
+    encabezados = ["i", "x_i", "y_i", "k1", "k2", "k3", "k4", "y_(i+1)"]
     print()
     print(tabulate(filas, headers=encabezados, tablefmt="grid"))
+
+
+def mostrar_detalle_interpolacion(pasos: list[PasoRK4], x_objetivo: float) -> None:
+    """Muestra el tramo usado para interpolar y el calculo aplicado."""
+    for paso in pasos:
+        if math.isclose(paso.x, x_objetivo, rel_tol=1e-9, abs_tol=1e-9):
+            print()
+            print("Detalle de interpolacion")
+            print("El valor solicitado coincide exactamente con un nodo calculado.")
+            print(f"y({x_objetivo}) = {paso.y:.6f}")
+            return
+
+    for indice in range(1, len(pasos)):
+        paso_izquierdo = pasos[indice - 1]
+        paso_derecho = pasos[indice]
+
+        if paso_izquierdo.x <= x_objetivo <= paso_derecho.x:
+            proporcion = (x_objetivo - paso_izquierdo.x) / (paso_derecho.x - paso_izquierdo.x)
+            valor_interpolado = paso_izquierdo.y + proporcion * (paso_derecho.y - paso_izquierdo.y)
+            print()
+            print("Detalle de interpolacion")
+            print(
+                f"Se usa el tramo [{paso_izquierdo.x:.6f}, {paso_derecho.x:.6f}] "
+                f"con y = [{paso_izquierdo.y:.6f}, {paso_derecho.y:.6f}]"
+            )
+            print(
+                "Formula: y(x) = y_i + ((x - x_i) / (x_(i+1) - x_i)) * (y_(i+1) - y_i)"
+            )
+            print(
+                f"Reemplazo: y({x_objetivo}) = {paso_izquierdo.y:.6f} + "
+                f"(({x_objetivo:.6f} - {paso_izquierdo.x:.6f}) / "
+                f"({paso_derecho.x:.6f} - {paso_izquierdo.x:.6f})) * "
+                f"({paso_derecho.y:.6f} - {paso_izquierdo.y:.6f})"
+            )
+            print(f"Resultado interpolado = {valor_interpolado:.6f}")
+            return
 
 
 def mostrar_resumen_edo(configuracion: ConfiguracionEDO) -> None:
@@ -219,6 +259,7 @@ def ejecutar_ejercicio_edo() -> None:
     pasos = calcular_aproximaciones_rk4(configuracion, derivada)
     mostrar_tabla_aproximaciones(pasos)
     valor_interpolado = interpolar_valor(pasos, configuracion.x_interpolacion)
+    mostrar_detalle_interpolacion(pasos, configuracion.x_interpolacion)
 
     print()
     print(f"Interpolacion: y({configuracion.x_interpolacion}) = {valor_interpolado:.6f}")
