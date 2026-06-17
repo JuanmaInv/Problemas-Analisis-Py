@@ -41,7 +41,25 @@ class EjercicioEDOTests(unittest.TestCase):
 
         pasos = calcular_aproximaciones_rk4(configuracion, derivada)
 
-        self.assertAlmostEqual(pasos[-1].y, math.e, places=4)
+        self.assertAlmostEqual(pasos[-1].y_siguiente, math.e, places=4)
+
+    def test_y_siguiente_representa_el_valor_del_proximo_paso(self) -> None:
+        configuracion = ConfiguracionEDO(
+            expresion_derivada="x + y",
+            x_inicial=0.0,
+            y_inicial=1.0,
+            paso=0.1,
+            cantidad_pasos=2,
+            x_interpolacion=0.15,
+        )
+        derivada = crear_funcion_derivada(configuracion.expresion_derivada)
+
+        pasos = calcular_aproximaciones_rk4(configuracion, derivada)
+
+        self.assertAlmostEqual(pasos[0].x, 0.0)
+        self.assertAlmostEqual(pasos[0].y, 1.0)
+        self.assertAlmostEqual(pasos[0].y_siguiente, 1.1103416667, places=6)
+        self.assertAlmostEqual(pasos[1].y, pasos[0].y_siguiente, places=6)
 
     def test_interpolacion_lineal_devuelve_valor_entre_pasos(self) -> None:
         configuracion = ConfiguracionEDO(
@@ -55,10 +73,16 @@ class EjercicioEDOTests(unittest.TestCase):
         derivada = crear_funcion_derivada(configuracion.expresion_derivada)
         pasos = calcular_aproximaciones_rk4(configuracion, derivada)
 
-        valor = interpolar_valor(pasos, 0.25)
+        valor = interpolar_valor(
+            pasos,
+            0.25,
+            configuracion.x_inicial,
+            configuracion.y_inicial,
+            configuracion.paso,
+        )
 
         self.assertGreater(valor, pasos[0].y)
-        self.assertLess(valor, pasos[1].y)
+        self.assertLess(valor, pasos[0].y_siguiente)
 
 
 if __name__ == "__main__":

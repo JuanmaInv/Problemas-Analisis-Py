@@ -105,30 +105,12 @@ def calcular_aproximaciones_rk4(
     y_actual = configuracion.y_inicial
     h = configuracion.paso
 
-    for iteracion in range(configuracion.cantidad_pasos + 1):
-        if iteracion == 0:
-            pasos.append(
-                PasoRK4(
-                    iteracion=iteracion,
-                    x=x_actual,
-                    y=y_actual,
-                    k1=0.0,
-                    k2=0.0,
-                    k3=0.0,
-                    k4=0.0,
-                    y_siguiente=y_actual,
-                )
-            )
-            continue
-
-        x_previo = x_actual
-        y_previo = y_actual
-        k1 = derivada(x_previo, y_previo)
-        k2 = derivada(x_previo + h / 2, y_previo + h * k1 / 2)
-        k3 = derivada(x_previo + h / 2, y_previo + h * k2 / 2)
-        k4 = derivada(x_previo + h, y_previo + h * k3)
-        y_actual = y_previo + h * (k1 + 2 * k2 + 2 * k3 + k4) / 6
-        x_actual = x_previo + h
+    for iteracion in range(configuracion.cantidad_pasos):
+        k1 = derivada(x_actual, y_actual)
+        k2 = derivada(x_actual + h / 2, y_actual + h * k1 / 2)
+        k3 = derivada(x_actual + h / 2, y_actual + h * k2 / 2)
+        k4 = derivada(x_actual + h, y_actual + h * k3)
+        y_siguiente = y_actual + h * (k1 + 2 * k2 + 2 * k3 + k4) / 6
 
         pasos.append(
             PasoRK4(
@@ -139,26 +121,52 @@ def calcular_aproximaciones_rk4(
                 k2=k2,
                 k3=k3,
                 k4=k4,
-                y_siguiente=y_actual,
+                y_siguiente=y_siguiente,
             )
         )
+
+        x_actual += h
+        y_actual = y_siguiente
 
     return pasos
 
 
-def interpolar_valor(pasos: list[PasoRK4], x_objetivo: float) -> float:
+def obtener_nodos_aproximados(
+    pasos: list[PasoRK4],
+    x_inicial: float,
+    y_inicial: float,
+    h: float,
+) -> list[tuple[float, float]]:
+    """Reconstruye los nodos x_i, y_i a partir de los pasos del metodo."""
+    if not pasos:
+        return [(x_inicial, y_inicial)]
+
+    nodos = [(paso.x, paso.y) for paso in pasos]
+    ultimo_paso = pasos[-1]
+    nodos.append((ultimo_paso.x + h, ultimo_paso.y_siguiente))
+    return nodos
+
+
+def interpolar_valor(
+    pasos: list[PasoRK4],
+    x_objetivo: float,
+    x_inicial: float,
+    y_inicial: float,
+    h: float,
+) -> float:
     """Interpola linealmente y(x) a partir de las aproximaciones calculadas."""
-    for paso in pasos:
-        if math.isclose(paso.x, x_objetivo, rel_tol=1e-9, abs_tol=1e-9):
-            return paso.y
+    nodos = obtener_nodos_aproximados(pasos, x_inicial, y_inicial, h)
+    for x_nodo, y_nodo in nodos:
+        if math.isclose(x_nodo, x_objetivo, rel_tol=1e-9, abs_tol=1e-9):
+            return y_nodo
 
-    for indice in range(1, len(pasos)):
-        paso_izquierdo = pasos[indice - 1]
-        paso_derecho = pasos[indice]
+    for indice in range(1, len(nodos)):
+        x_izquierdo, y_izquierdo = nodos[indice - 1]
+        x_derecho, y_derecho = nodos[indice]
 
-        if paso_izquierdo.x <= x_objetivo <= paso_derecho.x:
-            proporcion = (x_objetivo - paso_izquierdo.x) / (paso_derecho.x - paso_izquierdo.x)
-            return paso_izquierdo.y + proporcion * (paso_derecho.y - paso_izquierdo.y)
+        if x_izquierdo <= x_objetivo <= x_derecho:
+            proporcion = (x_objetivo - x_izquierdo) / (x_derecho - x_izquierdo)
+            return y_izquierdo + proporcion * (y_derecho - y_izquierdo)
 
     raise ValueError("No fue posible interpolar el valor solicitado.")
 
@@ -183,37 +191,45 @@ def mostrar_tabla_aproximaciones(pasos: list[PasoRK4]) -> None:
     print(tabulate(filas, headers=encabezados, tablefmt="grid"))
 
 
-def mostrar_detalle_interpolacion(pasos: list[PasoRK4], x_objetivo: float) -> None:
+def mostrar_detalle_interpolacion(
+    pasos: list[PasoRK4],
+    x_objetivo: float,
+    x_inicial: float,
+    y_inicial: float,
+    h: float,
+) -> None:
     """Muestra el tramo usado para interpolar y el calculo aplicado."""
-    for paso in pasos:
-        if math.isclose(paso.x, x_objetivo, rel_tol=1e-9, abs_tol=1e-9):
+    nodos = obtener_nodos_aproximados(pasos, x_inicial, y_inicial, h)
+
+    for x_nodo, y_nodo in nodos:
+        if math.isclose(x_nodo, x_objetivo, rel_tol=1e-9, abs_tol=1e-9):
             print()
             print("Detalle de interpolacion")
             print("El valor solicitado coincide exactamente con un nodo calculado.")
-            print(f"y({x_objetivo}) = {paso.y:.6f}")
+            print(f"y({x_objetivo}) = {y_nodo:.6f}")
             return
 
-    for indice in range(1, len(pasos)):
-        paso_izquierdo = pasos[indice - 1]
-        paso_derecho = pasos[indice]
+    for indice in range(1, len(nodos)):
+        x_izquierdo, y_izquierdo = nodos[indice - 1]
+        x_derecho, y_derecho = nodos[indice]
 
-        if paso_izquierdo.x <= x_objetivo <= paso_derecho.x:
-            proporcion = (x_objetivo - paso_izquierdo.x) / (paso_derecho.x - paso_izquierdo.x)
-            valor_interpolado = paso_izquierdo.y + proporcion * (paso_derecho.y - paso_izquierdo.y)
+        if x_izquierdo <= x_objetivo <= x_derecho:
+            proporcion = (x_objetivo - x_izquierdo) / (x_derecho - x_izquierdo)
+            valor_interpolado = y_izquierdo + proporcion * (y_derecho - y_izquierdo)
             print()
             print("Detalle de interpolacion")
             print(
-                f"Se usa el tramo [{paso_izquierdo.x:.6f}, {paso_derecho.x:.6f}] "
-                f"con y = [{paso_izquierdo.y:.6f}, {paso_derecho.y:.6f}]"
+                f"Se usa el tramo [{x_izquierdo:.6f}, {x_derecho:.6f}] "
+                f"con y = [{y_izquierdo:.6f}, {y_derecho:.6f}]"
             )
             print(
                 "Formula: y(x) = y_i + ((x - x_i) / (x_(i+1) - x_i)) * (y_(i+1) - y_i)"
             )
             print(
-                f"Reemplazo: y({x_objetivo}) = {paso_izquierdo.y:.6f} + "
-                f"(({x_objetivo:.6f} - {paso_izquierdo.x:.6f}) / "
-                f"({paso_derecho.x:.6f} - {paso_izquierdo.x:.6f})) * "
-                f"({paso_derecho.y:.6f} - {paso_izquierdo.y:.6f})"
+                f"Reemplazo: y({x_objetivo}) = {y_izquierdo:.6f} + "
+                f"(({x_objetivo:.6f} - {x_izquierdo:.6f}) / "
+                f"({x_derecho:.6f} - {x_izquierdo:.6f})) * "
+                f"({y_derecho:.6f} - {y_izquierdo:.6f})"
             )
             print(f"Resultado interpolado = {valor_interpolado:.6f}")
             return
@@ -258,8 +274,20 @@ def ejecutar_ejercicio_edo() -> None:
     mostrar_resumen_edo(configuracion)
     pasos = calcular_aproximaciones_rk4(configuracion, derivada)
     mostrar_tabla_aproximaciones(pasos)
-    valor_interpolado = interpolar_valor(pasos, configuracion.x_interpolacion)
-    mostrar_detalle_interpolacion(pasos, configuracion.x_interpolacion)
+    valor_interpolado = interpolar_valor(
+        pasos,
+        configuracion.x_interpolacion,
+        configuracion.x_inicial,
+        configuracion.y_inicial,
+        configuracion.paso,
+    )
+    mostrar_detalle_interpolacion(
+        pasos,
+        configuracion.x_interpolacion,
+        configuracion.x_inicial,
+        configuracion.y_inicial,
+        configuracion.paso,
+    )
 
     print()
     print(f"Interpolacion: y({configuracion.x_interpolacion}) = {valor_interpolado:.6f}")

@@ -21,23 +21,48 @@ La estructura del proyecto ya esta preparada y actualmente:
 - `ejercicio2_potencia_inversa.py`: modulo de potencia inversa con iteraciones y convergencia.
 - `requirements.txt`: dependencias del proyecto.
 
-## Entorno virtual
+## Puesta en marcha en una PC recien clonada
 
-El proyecto usa un entorno virtual local en `.venv`.
+Si alguien clona el proyecto por primera vez, estos son los pasos recomendados para dejarlo listo y ejecutarlo.
 
-### Activacion en PowerShell
+### 1. Entrar a la carpeta del proyecto
+
+```powershell
+cd C:\ruta\al\proyecto
+```
+
+### 2. Crear el entorno virtual
+
+```powershell
+python -m venv .venv
+```
+
+### 3. Activar el entorno virtual en PowerShell
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
 ```
 
-## Instalacion de dependencias
+Si PowerShell bloquea la ejecucion de scripts, se puede habilitar solo para la sesion actual con:
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\.venv\Scripts\Activate.ps1
+```
+
+### 4. Actualizar `pip`
+
+```powershell
+python -m pip install --upgrade pip
+```
+
+### 5. Instalar las dependencias
 
 ```powershell
 python -m pip install -r requirements.txt
 ```
 
-## Ejecucion
+### 6. Ejecutar el programa
 
 ```powershell
 python main.py
@@ -45,11 +70,13 @@ python main.py
 
 El programa muestra un menu para elegir el ejercicio `1` o `2`.
 
-## Tests
+### 7. Ejecutar los tests
 
 ```powershell
 python -m unittest discover -s tests
 ```
+
+Si el comando `python` no funciona en la PC, se puede probar con `py` en los mismos pasos.
 
 En el ejercicio 1 la funcion derivada debe ingresarse como expresion en terminos de `x` e `y`, por ejemplo:
 
@@ -83,13 +110,33 @@ x a interpolar = 0.15
 
 La salida mostrara:
 
-- una tabla con `k1`, `k2`, `k3`, `k4` y `y_(i+1)` en cada paso;
+- una tabla con `x_i`, `y_i`, `k1`, `k2`, `k3`, `k4` y `y_(i+1)` en cada paso;
+- `x_i` es el valor actual de `x` en el paso `i`;
+- `y_i` es la aproximacion actual de `y(x_i)`;
+- `k1`, `k2`, `k3` y `k4` son las pendientes intermedias que calcula Runge-Kutta de cuarto orden;
+- `y_(i+1)` es la nueva aproximacion de `y` en el siguiente paso.
+
+En cada paso se calcula:
+
+```text
+k1 = h * f(x_i, y_i)
+k2 = h * f(x_i + h/2, y_i + k1/2)
+k3 = h * f(x_i + h/2, y_i + k2/2)
+k4 = h * f(x_i + h, y_i + k3)
+```
+
+Luego se obtiene el siguiente valor aproximado con:
+
+```text
+y_(i+1) = y_i + (k1 + 2k2 + 2k3 + k4) / 6
+```
+
+Esto significa que el metodo no usa una sola pendiente, sino un promedio ponderado de cuatro pendientes para lograr una aproximacion mas precisa.
+
 - el tramo usado para interpolar;
 - el reemplazo numerico de la formula de interpolacion.
 
 Para el ejercicio 2 se puede probar, por ejemplo:
-
-```text
 dimension = 2
 tolerancia = 0.000001
 maximo de iteraciones = 20
@@ -99,9 +146,14 @@ matriz =
 vector inicial =
 1
 1
-```
 
 La salida mostrara:
+Las 20 iteraciones con
+el v anterior (es el vector con el que el método empieza esa fila)
+el z (que se calcula de Az=v, despejano la z dado que tengo el valor de A y de v)
+el v nuevo
+el autovalor
+el error
 
 - el vector anterior de cada iteracion;
 - el vector intermedio `z = A^-1 v`;
